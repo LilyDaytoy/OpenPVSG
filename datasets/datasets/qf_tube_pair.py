@@ -1,12 +1,19 @@
 import os
-import copy
 from pathlib import Path
-from click import utils
+import numpy as np
 
 from mmdet.datasets.builder import DATASETS
 from .utils import PVSGAnnotation
 from ...utils.postprocess import load_pred_mask_tubes, load_gt_mask_tubes, \
                                  match_gt_pred_mask_tubes, load_pickle, get_labels_single_video
+
+
+PREDICATES = ['behind', 'caressing', 'catching', 'chasing', 'falling on', 'grabbing', 
+              'hitting', 'holding', 'in front of', 'jumping to', 'kicking', 'kissing', 
+              'looking at', 'next to', 'on', 'passing over', 'picking', 'playing with', 
+              'pulling', 'pushing', 'putting down', 'riding', 'riding on', 'runinng to', 
+              'running on', 'running to', 'sitting on', 'stading on', 'standing on', 'standng on', 
+              'thowing', 'throwing', 'touching', 'walking', 'walking on']  # sort by alphabetical order
 
 @DATASETS.register_module()
 class QueryFeaturePairDataset:
@@ -44,11 +51,11 @@ class QueryFeaturePairDataset:
                             if len(frame_label) == 0:
                                 continue
                             self.data.append([frame_s, frame_o])
-                            self.labels.append(frame_label)
+                            self.labels.append(self.encode_predicate_label(frame_label))
                 else: # one data is a pair tube in one whole video
                     for tube_pair, tube_label in zip(pairs_filtered_this_video, labels_this_video):
                         self.data.append(tube_pair)
-                        self.labels.append(tube_label['label'])
+                        self.labels.append([self.encode_predicate_label(l) for l in tube_label['label']])
         else:
             pass # TODO
                 
@@ -68,6 +75,11 @@ class QueryFeaturePairDataset:
         pairs_filtered, labels = get_labels_single_video(assigned_labels, qf_tube_obj_list, gt_relations)
         return pairs_filtered, labels
 
+    def encode_predicate_label(self, predicate_list): # one-hot encoding
+        label = {x: 0 for x in PREDICATES}
+        for p in predicate_list:
+            label[p] = 1
+        return np.array(list(label.values()))
         
     def prepare_train_img(self, idx):
         return {'data': self.data[idx],
