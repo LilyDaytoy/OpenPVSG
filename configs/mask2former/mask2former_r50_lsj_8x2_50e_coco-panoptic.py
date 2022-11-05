@@ -8,8 +8,8 @@ load_from = 'https://download.openmmlab.com/mmdetection/v2.0/' \
             'mask2former/mask2former_r50_lsj_8x2_50e_coco-panoptic/' \
             'mask2former_r50_lsj_8x2_50e_coco-panoptic_20220326_224516-11a44721.pth'
 
-num_things_classes = 53
-num_stuff_classes = 8
+num_things_classes = 50
+num_stuff_classes = 13
 num_classes = num_things_classes + num_stuff_classes
 model = dict(
     type='Mask2FormerCustom',
@@ -147,14 +147,13 @@ model = dict(
     init_cfg=None)
 
 # dataset settings
-data_root = './data/pvsg_demo'
 # data = dict(
 #     samples_per_gpu=32, # 4 gpus
 #     workers_per_gpu=4,
 #     )
 # for debug mode
 data = dict(
-    samples_per_gpu=8, # 4 gpus
+    samples_per_gpu=32, # 4 gpus
     workers_per_gpu=2,
     )
 

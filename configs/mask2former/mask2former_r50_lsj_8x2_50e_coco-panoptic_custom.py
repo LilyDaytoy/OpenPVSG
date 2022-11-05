@@ -148,7 +148,6 @@ model = dict(
     init_cfg=None)
 
 # dataset settings
-data_root = './data/pvsg_demo'
 # data = dict(
 #     samples_per_gpu=32, # 4 gpus
 #     workers_per_gpu=4,
