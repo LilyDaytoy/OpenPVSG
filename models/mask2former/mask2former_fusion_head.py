@@ -109,6 +109,7 @@ class MaskFormerFusionHeadCustom(BasePanopticFusionHead):
                 (h, w), each element in Tensor means: \
                 ``segment_id = _cls + instance_id * INSTANCE_OFFSET``.
         """
+        # import pdb; pdb.set_trace()
         object_mask_thr = self.test_cfg.get('object_mask_thr', 0.8)
         iou_thr = self.test_cfg.get('iou_thr', 0.8)
         filter_low_score = self.test_cfg.get('filter_low_score', False)
@@ -155,6 +156,8 @@ class MaskFormerFusionHeadCustom(BasePanopticFusionHead):
                     if not isthing:
                         # different stuff regions of same class will be
                         # merged here, and stuff share the instance_id 0.
+                        if len(torch.unique(mask)) == 1 and torch.unique(mask).item() == False:
+                            continue # for the case can reach this step but "mask = mask & (cur_masks[k] >= 0.5)" becomes all "False" when filtering low scores!
                         panoptic_seg[mask] = pred_class
                         query_feat_dict[pred_class].append(query_feat_k)
                     else:
@@ -164,7 +167,7 @@ class MaskFormerFusionHeadCustom(BasePanopticFusionHead):
                             pred_class + instance_id * INSTANCE_OFFSET)
                         query_feat_dict[pred_class + instance_id * INSTANCE_OFFSET].append(query_feat_k)
                         instance_id += 1  # update at last!!!
-
+        # import pdb; pdb.set_trace()
         return panoptic_seg, query_feat_dict
 
 
