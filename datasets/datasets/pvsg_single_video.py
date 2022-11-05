@@ -12,20 +12,30 @@ from mmdet.datasets.pipelines import Compose
 from datasets.datasets.utils import SeqObj, PVSGAnnotation, vpq_eval
 
 # a demo version for pvsg dataset
-THING_CLASSES = ['lighter', 'stand', 'flower', 'glass', 'book', 'spoon', 'glasses', 
-                 'microphone', 'scissor', 'towel', 'basket', 'adult', 'child', 'baby', 
-                 'horse', 'cat', 'dog', 'bed', 'sink', 'faucet', 'sofa', 'table', 'chair', 
-                 'light', 'knife', 'fork', 'candle', 'plate', 'bowl', 'bottle', 'cup', 
-                 'rock', 'road', 'grass', 'hat', 'vegetable', 'fruit', 'cake', 'bread', 
-                 'paper', 'bag', 'box', 'cellphone', 'camera', 'ballon', 'toy', 'racket', 
-                 'bat', 'ball', 'fountain', 'bench', 'bike', 'car']
-STUFF_CLASSES = ['fence', 'tree', 'ground', 'pavement', 'floor', 'ceiling', 'wall', 'water']
-BACKGROUND_CLASSES = ['background'] # none segmenation part 'void'
+# THING_CLASSES = ['lighter', 'stand', 'flower', 'glass', 'book', 'spoon', 'glasses', 
+#                  'microphone', 'scissor', 'towel', 'basket', 'adult', 'child', 'baby', 
+#                  'horse', 'cat', 'dog', 'bed', 'sink', 'faucet', 'sofa', 'table', 'chair', 
+#                  'light', 'knife', 'fork', 'candle', 'plate', 'bowl', 'bottle', 'cup', 
+#                  'rock', 'road', 'grass', 'hat', 'vegetable', 'fruit', 'cake', 'bread', 
+#                  'paper', 'bag', 'box', 'cellphone', 'camera', 'ballon', 'toy', 'racket', 
+#                  'bat', 'ball', 'fountain', 'bench', 'bike', 'car']
+# STUFF_CLASSES = ['fence', 'tree', 'ground', 'pavement', 'floor', 'ceiling', 'wall', 'water']
+# BACKGROUND_CLASSES = ['background'] # none segmenation part 'void'
+# NO_OBJ = 61
+
+# pvsg_v1
+THING_CLASSES = ['adult', 'baby', 'bag', 'ball', 'ballon', 'basket', 'bed', 'bench', 'bike', 
+                 'book', 'bottle', 'bowl', 'box', 'cabinet', 'cake', 'camera', 'candle', 'car', 'cat', 
+                 'cellphone', 'chair', 'child', 'cup', 'curtain', 'dog', 'door', 'flower', 'fork', 'fridge', 
+                 'glass', 'hat', 'knife', 'light', 'lighter', 'mat', 'paper', 'plant', 'plate', 'rock', 'shelf', 
+                 'shoe', 'skateboard', 'sofa', 'spoon', 'stand', 'table', 'towel', 'toy', 'tv', 'window']
+STUFF_CLASSES = ['ceiling', 'fence', 'floor', 'grass', 'ground', 'pavement', 'road', 'sand', 'sky', 'slide', 'tree', 'wall', 'water']
+BACKGROUND_CLASSES = ['background'] # none segmenation part 'void' - 255
+NO_OBJ = 63
 
 NUM_THING = len(THING_CLASSES)
 NUM_STUFF = len(STUFF_CLASSES)
 
-NO_OBJ = 61
 
 
 def build_classes():
@@ -47,7 +57,7 @@ class PVSGSingleVideoImageDataset:
 
     def __init__(self,
                  pipeline=None,
-                 data_root="./data/pvsg_demo", 
+                 data_root="./data/pvsg_v1", 
                  video_name="0010_8610561401",  # data.test.video_name
                  test_mode=False,
                  split='test',

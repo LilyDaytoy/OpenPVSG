@@ -9,6 +9,7 @@ from mmdet.core import INSTANCE_OFFSET
 from mmdet.datasets.builder import DATASETS
 from mmdet.datasets.pipelines import Compose
 
+# from datasets.datasets.builder import DATASETS
 from datasets.datasets.utils import SeqObj, PVSGAnnotation, vpq_eval
 
 # a demo version for pvsg dataset
@@ -62,8 +63,8 @@ class PVSGImageDataset:
 
     def __init__(self,
                  pipeline=None,
-                 data_root="./data/pvsg_demo", 
-                 annotation_file="pvsg_demo.json",
+                 data_root="./data/pvsg_v1", 
+                 annotation_file="pvsg.json",
                  test_mode=False,
                  split='train',
                  with_relation: bool = False
