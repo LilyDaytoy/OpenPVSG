@@ -23,16 +23,12 @@ from mmdet.models import build_detector
 from mmdet.utils import (build_ddp, build_dp, compat_cfg, get_device,
                          replace_cfg_vals, setup_multi_processes,
                          update_data_root)
-import sys
-sys.path.append("/mnt/lustre/jkyang/wxpeng/CVPR23/PVSG_Image")
+
 from datasets.datasets.builder import build_dataset
-# from models.mask2former.builder import build_detector # add for registry
-# HY : custom import
-# To circumvent monotonous custom import in configs
-import models  # noqa: F401
-import datasets  # noqa: F401
+import models
+import datasets
 
-
+os.environ["RANK"] = "0"
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -259,10 +255,6 @@ def main():
         outputs = multi_gpu_test(
             model, data_loader, args.tmpdir, args.gpu_collect
             or cfg.evaluation.get('gpu_collect', False))
-
-    # save outputs -- wx added
-    # with open("/mnt/lustre/jkyang/wxpeng/CVPR23/PVSG_Image/cls_fine_tune_ckpt1_results.pickle", "wb") as f:
-    #     pickle.dump(outputs, f)
 
     rank, _ = get_dist_info()
     if rank == 0:

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import json
 import copy
 
 import numpy as np
@@ -11,72 +12,44 @@ from mmdet.datasets.pipelines import Compose
 
 from datasets.datasets.utils import SeqObj, PVSGAnnotation, vpq_eval
 
-# a demo version for pvsg dataset
-# THING_CLASSES = ['lighter', 'stand', 'flower', 'glass', 'book', 'spoon', 'glasses', 
-#                  'microphone', 'scissor', 'towel', 'basket', 'adult', 'child', 'baby', 
-#                  'horse', 'cat', 'dog', 'bed', 'sink', 'faucet', 'sofa', 'table', 'chair', 
-#                  'light', 'knife', 'fork', 'candle', 'plate', 'bowl', 'bottle', 'cup', 
-#                  'rock', 'road', 'grass', 'hat', 'vegetable', 'fruit', 'cake', 'bread', 
-#                  'paper', 'bag', 'box', 'cellphone', 'camera', 'ballon', 'toy', 'racket', 
-#                  'bat', 'ball', 'fountain', 'bench', 'bike', 'car']
-# STUFF_CLASSES = ['fence', 'tree', 'ground', 'pavement', 'floor', 'ceiling', 'wall', 'water']
-# BACKGROUND_CLASSES = ['background'] # none segmenation part 'void'
-# NO_OBJ = 61
-
-# pvsg_v1
-THING_CLASSES = ['adult', 'baby', 'bag', 'ball', 'ballon', 'basket', 'bed', 'bench', 'bike', 
-                 'book', 'bottle', 'bowl', 'box', 'cabinet', 'cake', 'camera', 'candle', 'car', 'cat', 
-                 'cellphone', 'chair', 'child', 'cup', 'curtain', 'dog', 'door', 'flower', 'fork', 'fridge', 
-                 'glass', 'hat', 'knife', 'light', 'lighter', 'mat', 'paper', 'plant', 'plate', 'rock', 'shelf', 
-                 'shoe', 'skateboard', 'sofa', 'spoon', 'stand', 'table', 'towel', 'toy', 'tv', 'window']
-STUFF_CLASSES = ['ceiling', 'fence', 'floor', 'grass', 'ground', 'pavement', 'road', 'sand', 'sky', 'slide', 'tree', 'wall', 'water']
-BACKGROUND_CLASSES = ['background'] # none segmenation part 'void' - 255
-NO_OBJ = 63
-
-NUM_THING = len(THING_CLASSES)
-NUM_STUFF = len(STUFF_CLASSES)
-
-
-
-def build_classes():
-    classes = []
-    for cls in THING_CLASSES:
-        classes.append(cls)
-
-    for cls in STUFF_CLASSES:
-        classes.append(cls)
-    return classes
-
-
 @DATASETS.register_module()
 class PVSGSingleVideoImageDataset:
     """
     A dataset only used for test to connect tracker to get query feature tube of a video.
     """
-    CLASSES = build_classes()
-
     def __init__(self,
                  pipeline=None,
-                 data_root="./data/pvsg_v1", 
-                 video_name="0010_8610561401",  # data.test.video_name
+                 data_root="./data/",
+                 annotation_file="pvsg.json",
+                 video_name="0010_8610561401",
                  test_mode=False,
                  split='test',
                  ):
         assert data_root is not None
         data_root = Path(data_root)
-        video_seq_dir = data_root / split
+        anno_file = data_root / annotation_file
+        
+        with open(anno_file, "r") as f:
+            anno = json.load(f)
+            
+        # collect class names
+        self.THING_CLASSES = anno['objects']['thing']   # 115
+        self.STUFF_CLASSES = anno['objects']['stuff']   # 11
+        self.BACKGROUND_CLASSES = ['background']
+        self.CLASSES = self.THING_CLASSES + self.STUFF_CLASSES
+        self.num_thing_classes = len(self.THING_CLASSES)
+        self.num_stuff_classes = len(self.STUFF_CLASSES)
+        self.num_classes = len(self.CLASSES)    # 126
 
-        assert video_seq_dir.exists()
-        images_dir = video_seq_dir / "images" / video_name # eg. ./data/pvsg_demo/val/images/0010_8610561401
+        if video_name.startswith('P'):
+            data_source = 'epic_kitchen'
+        elif video_name.split('_')[0].isdigit() and len(video_name.split('_')[0]) == 4:
+            data_source = 'vidor'
+        else:
+            data_source = 'ego4d'
 
-
-        # Dataset informartion
-        self.num_thing_classes = NUM_THING
-        self.num_stuff_classes = NUM_STUFF
-        self.num_classes = self.num_thing_classes + self.num_stuff_classes
-        assert self.num_classes == len(self.CLASSES)
-        self.no_obj_class = NO_OBJ
-
+        # eg. ./data/pvsg_demo/val/images/0010_8610561401
+        images_dir = data_root / data_source / "frames" / video_name
         img_names = sorted([str(x) for x in (images_dir.rglob("*.png"))])
 
         # find all images
@@ -92,7 +65,6 @@ class PVSGSingleVideoImageDataset:
         
         self.images = images # "data" of this dataset
         # self.images = images[:16] # for debug
-        # self.reference_images = reference_images
         # self.images = images[104:250] # debug
 
         # mmdet
@@ -155,8 +127,6 @@ class PVSGSingleVideoImageDataset:
     def _set_groups(self):
         return np.zeros((len(self)), dtype=np.int64)
 
-
-
     def evaluate(
             self,
             results,
@@ -184,7 +154,7 @@ class PVSGSingleVideoImageDataset:
                 else:
                     pan_seg_map[pan_seg_result == itm] = itm * max_ins
             assert -1 not in pan_seg_result
-            pq_result = vpq_eval([pan_seg_map, gt_pan], num_classes=self.no_obj_class, max_ins=max_ins, ign_id=self.no_obj_class)
+            pq_result = vpq_eval([pan_seg_map, gt_pan], num_classes=self.num_classes, max_ins=max_ins, ign_id=self.num_classes)
             pq_results.append(pq_result)
 
         iou_per_class = np.stack([result[0] for result in pq_results]).sum(axis=0)[:self.num_classes]
@@ -202,8 +172,3 @@ class PVSGSingleVideoImageDataset:
                 "PQ_th": pq[:self.num_thing_classes].mean(),
                 "PQ_st": pq[self.num_thing_classes:].mean(),
                 }
-
-
-
-            
-

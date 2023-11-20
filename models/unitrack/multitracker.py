@@ -24,7 +24,14 @@ from models.unitrack.basetrack import *
 from models.unitrack.data.query_feat_tracklet import QueryFeatTube
 
 
-
+def class_aware_distance(tracks, detections, query_feats):
+    dists, _ = matching.reconsdot_distance(tracks, detections)
+    for i, track in enumerate(tracks):
+        for j, det in enumerate(detections):
+            # Penalize the distance if categories do not match
+            if track.cls_id != query_feats[j]['cls_id'] % 1000:
+                dists[i, j] = float('inf')
+    return dists
 
 class AssociationTracker(object):
     def __init__(self, tracker_cfg):
@@ -77,7 +84,8 @@ class AssociationTracker(object):
 
         ''' Step 2: First association, with embedding'''
         tracks = joint_stracks(tracked_stracks, self.lost_stracks)
-        dists, recons_ftrk = matching.reconsdot_distance(tracks, detections)
+        # dists, _ = matching.reconsdot_distance(tracks, detections)
+        dists = class_aware_distance(tracks, detections, query_feats)
         if self.tracker_cfg.mots.use_kalman: 
             # Predict the current location with KF
             STrack.multi_predict(tracks)
@@ -85,7 +93,7 @@ class AssociationTracker(object):
                     lambda_=self.tracker_cfg.mots.motion_lambda, gate=self.tracker_cfg.mots.motion_gated)
         if obs.shape[1] == 6:
             dists = matching.category_gate(dists, tracks, detections)
-        matches, u_track, u_detection = matching.linear_assignment(dists, thresh=0.7)
+        matches, u_track, u_detection = matching.linear_assignment(dists, thresh=0.9)
 
         for itracked, idet in matches:
             track = tracks[itracked]
@@ -95,7 +103,7 @@ class AssociationTracker(object):
             self.query_feat_tubes[track.track_id - 1 - total_num_tubes_previous].update(query_feat, self.frame_id)
             # ----------------------------------------------------------------------------------------
             if track.state == TrackState.Tracked:
-                track.update(detections[idet], self.frame_id)
+                track.update(det, self.frame_id)
                 activated_stracks.append(track)
             else:
                 track.re_activate(det, self.frame_id, new_id=False)
@@ -162,6 +170,7 @@ class AssociationTracker(object):
             query_feat_tube = QueryFeatTube(self.frame_id, track.track_id, query_feat)
             self.query_feat_tubes.append(query_feat_tube)
             #----------------------------------------------------------------------------------------------
+            track.cls_id = query_feat['cls_id'] % 1000
             activated_stracks.append(track)
 
         """ Step 5: Update state"""

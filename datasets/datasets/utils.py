@@ -119,18 +119,18 @@ def pan_mm2hb(pred_pan_map, num_classes, divisor=10000):
     return pan_seg_map
 
 
-
 class PVSGAnnotation:
-    def __init__(self, anno_file):
+    def __init__(self, anno_file, video_ids):
         with open(anno_file, "r") as f:
             anno = json.load(f)
-            
-        self.anno = anno
+        self.anno = anno['data']
+        
         videos = {}
-        for video_anno in anno:
-            videos[video_anno['video_id']] = video_anno
+        for video_anno in self.anno:
+            if video_anno['video_id'] in video_ids:
+                videos[video_anno['video_id']] = video_anno
+        
         self.videos = videos
-
 
     def __getitem__(self, vid):
         assert vid in self.videos

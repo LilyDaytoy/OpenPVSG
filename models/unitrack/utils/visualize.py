@@ -10,6 +10,23 @@ import PIL
 import pycocotools.mask as mask_utils
 from . import palette
 
+CLASSES = ['adult', 'baby', 'bag', 'ball', 'ballon', 'basket', 'bat', 'bed', 
+'bench', 'beverage', 'bike', 'bird', 'blanket', 'board', 'book', 'bottle', 
+'bowl', 'box', 'bread', 'brush', 'bucket', 'cabinet', 'cake', 'camera', 'can', 
+'candle', 'car', 'card', 'carpet', 'cart', 'cat', 'cellphone', 'chair', 
+'child', 'chopstick', 'cloth', 'computer', 'condiment', 'cookie', 'countertop', 
+'cover', 'cup', 'curtain', 'dog', 'door', 'drawer', 'dustbin', 'egg', 'fan', 
+'faucet', 'fence', 'flower', 'fork', 'fridge', 'fruit', 'gift', 'glass', 
+'glasses', 'glove', 'grain', 'guitar', 'hat', 'helmet', 'horse', 'iron', 
+'knife', 'light', 'lighter', 'mat', 'meat', 'microphone', 'microwave', 'mop', 
+'net', 'noodle', 'others', 'oven', 'pan', 'paper', 'piano', 'pillow', 'pizza', 
+'plant', 'plate', 'pot', 'powder', 'rack', 'racket', 'rag', 'ring', 'scissor', 
+'shelf', 'shoe', 'simmering', 'sink', 'slide', 'sofa', 'spatula', 'sponge', 
+'spoon', 'spray', 'stairs', 'stand', 'stove', 'switch', 'table', 'teapot', 
+'towel', 'toy', 'tray', 'tv', 'vaccum', 'vegetable', 'washer', 'window', 
+'ceiling', 'floor', 'grass', 'ground', 'rock', 'sand', 'sky', 'snow', 
+'tree', 'wall', 'water']
+
 
 def dump_predictions(pred, lbl_set, img, prefix):
     '''
@@ -52,8 +69,6 @@ def dump_predictions(pred, lbl_set, img, prefix):
 
     return img_with_label, pred_lbl, img_with_heatmap1
 
-
-
 def make_gif(video, outname='/tmp/test.gif', sz=256):
     if hasattr(video, 'shape'):
         video = video.cpu()
@@ -86,7 +101,7 @@ def plot_tracking(image, obs, obj_ids, scores=None, frame_id=0, fps=0.):
 
     for i, ob in enumerate(obs): 
         obj_id = int(obj_ids[i])
-        id_text = '{}'.format(int(obj_id))
+        id_text = '{}_{}'.format(CLASSES[ob['class_id']], str(obj_id))
         _line_thickness = 1 if obj_id <= 0 else line_thickness
         color = get_color(obj_id)
         if len(ob) == 4:
@@ -100,7 +115,33 @@ def plot_tracking(image, obs, obj_ids, scores=None, frame_id=0, fps=0.):
             mask = cv2.resize(mask, (im_w, im_h), interpolation=cv2.INTER_LINEAR)
             mask = (mask > 0.5).astype(np.uint8)[:,:,None]
             mask_color = mask * color
-            im = (1 - mask) * im + mask * (alpha*im + (1-alpha)*mask_color) 
+            im = (1 - mask) * im + mask * (alpha*im + (1-alpha)*mask_color)
+            # put the id tag at the mask centroid
+            M = cv2.moments(mask)
+            if M['m00'] != 0:
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+            else:
+                cx, cy = mask.shape[1]//2, mask.shape[0]//2
+            (text_width, text_height), _ = cv2.getTextSize(id_text, cv2.FONT_HERSHEY_PLAIN, text_scale, text_thickness)
+            tag = np.zeros((text_height + 10, text_width + 10, 3), dtype=np.uint8)
+            cv2.putText(tag, id_text, (5, text_height + 5), cv2.FONT_HERSHEY_PLAIN, text_scale, (255,255,255), thickness=text_thickness)
+            # put the tag on image
+            start_x = cx - tag.shape[1] // 2
+            start_y = cy - tag.shape[0] // 2
+            tag_height, tag_width = tag.shape[:2]
+            start_x = max(start_x, 0)
+            start_y = max(start_y, 0)
+            end_x = start_x + tag_width
+            end_y = start_y + tag_height
+            if end_x > im.shape[1]:
+                end_x = im.shape[1]
+                tag_width = im.shape[1] - start_x
+            if end_y > im.shape[0]:
+                end_y = im.shape[0]
+                tag_height = im.shape[0] - start_y
+            im[start_y:end_y, start_x:end_x] = tag[:tag_height, :tag_width]
+
         else:
             raise ValueError('Observation format not supported.')
     return im

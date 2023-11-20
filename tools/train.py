@@ -1,7 +1,3 @@
-# Copyright (c) OpenMMLab. All rights reserved.
-# Copy and modified from mmdet@3b72b12
-# No other change to mmdet@3b72b12 except for:
-# HY : custom import
 import argparse
 import copy
 import os
@@ -18,23 +14,15 @@ from mmcv.utils import get_git_hash
 
 from mmdet import __version__
 from mmdet.apis import init_random_seed, set_random_seed, train_detector
-# from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 from mmdet.utils import (collect_env, get_device, get_root_logger,
                          replace_cfg_vals, setup_multi_processes,
                          update_data_root)
-import sys
-sys.path.append("/mnt/lustre/jkyang/wxpeng/CVPR23/PVSG_Image")
 from datasets.datasets.builder import build_dataset
+import models
+import datasets
 
-# HY : custom import
-# To circumvent monotonous custom import in configs
-# import sys 
-# sys.path.append("/mnt/lustre/jkyang/wxpeng/CVPR23/UnifiedVideoSeg-main") # add env for the following import
-import models  # noqa: F401
-import datasets  # noqa: F401
-
-os.environ["RANK"] = "0" # add manually for multi-gpu training
+os.environ["RANK"] = "0"
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -177,7 +165,9 @@ def main():
                       'in `gpu_ids` now.')
     if args.gpus is None and args.gpu_ids is None:
         cfg.gpu_ids = [args.gpu_id]
-
+        
+    print(args.launcher)
+    print(cfg.dist_params)
     # init distributed env first, since logger depends on the dist info.
     if args.launcher == 'none':
         distributed = False

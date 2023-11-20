@@ -17,7 +17,15 @@ class LoadOutputsFromMask2Former:
                  tracker_cfg,  # add cfg! (follow unitrack opt)
                  classes):
         data_root = Path(data_cfg.data_root)
-        video_folder = data_root / data_cfg.split / "images" / data_cfg.video_name
+        video_name = data_cfg.video_name
+        if video_name.startswith('P'):
+            data_source = 'epic_kitchen'
+        elif video_name.split('_')[0].isdigit() and len(video_name.split('_')[0]) == 4:
+            data_source = 'vidor'
+        else:
+            data_source = 'ego4d'
+
+        video_folder = data_root / data_source / "frames" / video_name
         self.num_classes = len(classes)
         self.img_files = sorted([str(x) for x in (video_folder.rglob("*.png"))])
         self.transforms = T.Compose([T.ToTensor(), T.Normalize(tracker_cfg.common.im_mean, tracker_cfg.common.im_std)])
@@ -32,7 +40,8 @@ class LoadOutputsFromMask2Former:
         
     def _get_binary_masks_and_query_feats(self, pan_mask, query_feat_dict): # for single frame all objects
         object_ids = list(np.unique(pan_mask))
-        object_ids.remove(self.num_classes)
+        if self.num_classes in object_ids:
+            object_ids.remove(self.num_classes)
         if len(object_ids) == 0:  # deal with the case that no mask was detected from mask2former!!!!
             return np.array([]), []
         assert len(list(query_feat_dict.keys())) == len(object_ids), "Masks and query feats should match!"

@@ -8,8 +8,8 @@ load_from = 'https://download.openmmlab.com/mmdetection/v2.0/' \
             'mask2former/mask2former_r50_lsj_8x2_50e_coco-panoptic/' \
             'mask2former_r50_lsj_8x2_50e_coco-panoptic_20220326_224516-11a44721.pth'
 
-num_things_classes = 50
-num_stuff_classes = 13
+num_things_classes = 115
+num_stuff_classes = 11
 num_classes = num_things_classes + num_stuff_classes
 model = dict(
     type='Mask2FormerCustom',
@@ -188,12 +188,19 @@ lr_config = dict(
 
 
 runner = dict(type='EpochBasedRunner', max_epochs=8)
+project_name = 'pvsg'
+expt_name = 'stage1_1104'
 
 log_config = dict(
     interval=50,
     hooks=[
         dict(type='TextLoggerHook', by_epoch=False),
-        # dict(type='TensorboardLoggerHook', by_epoch=False)
+        dict(type='WandbLoggerHook', 
+        init_kwargs=dict(
+            project=project_name,
+            name=expt_name,
+        ),
+        )
     ])
 interval = 1
 # workflow = [('train', interval), ('val', interval)]

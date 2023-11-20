@@ -1,5 +1,5 @@
 _base_ = [
-    '../mask2former/mask2former_r50_lsj_8x2_50e_coco-panoptic_custom_singel_video_test.py'
+    '../mask2former/mask2former_r50_lsj_8x2_50e_coco-panoptic_custom_single_video_test.py'
 ]
 
 tracker_cfg = dict(
@@ -10,25 +10,24 @@ tracker_cfg = dict(
         im_mean=[0.485, 0.456, 0.406],
         im_std=[0.229, 0.224, 0.225],
         nopadding=False,
-        resume='/mnt/lustre/jkyang/wxpeng/CVPR23/UniTrack/pretrained/timecycle.pth',
+        resume='./checkpoints/UniTrack/timecycle.pth',
         down_factor=8,
-        infer2D=True ,
+        infer2D=True,
         workers=4,
         gpu_id=0,
         device='cuda'
     ),
     mots=dict(
         obid='COSTA_st',
-        mots_root='/mnt/lustre/jkyang/wxpeng/CVPR23/UniTrack/MOTS/MOTS',
         save_videos=True,
         save_images=True,
         test=False,
-        track_buffer=30,
+        track_buffer=300,
         nms_thres=0.4,
         conf_thres=0.5,
         iou_thres=0.5,
         prop_flag=False,
-        max_mask_area=200,
+        max_mask_area=300,
         dup_iou_thres=0.15,
         confirm_iou_thres=0.7,
         first_stage_thres=0.7,

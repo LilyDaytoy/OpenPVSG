@@ -30,7 +30,8 @@ def write_mots_results(filename, results, data_type='mot'):
                     continue
                 rle_str = rle['counts']
                 imh, imw = rle['size']
-                line = save_format.format(frame=frame_id, id=track_id, cid=-1, imh=imh, imw=imw, rle=rle_str)
+                cid = rle['class_id']
+                line = save_format.format(frame=frame_id, id=track_id, cid=cid, imh=imh, imw=imw, rle=rle_str)
                 f.write(line)
     log.logger.info('Save results to {}'.format(filename))
     
