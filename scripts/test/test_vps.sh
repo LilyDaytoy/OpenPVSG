@@ -3,8 +3,8 @@ set -x
 PARTITION=regular
 JOB_NAME=psg
 CONFIG=configs/mask2former_vps/mask2former_video_r50.py
-WORK_DIR=work_dirs/mask2former_r50_vps_1108
-CHECKPOINT=work_dirs/mask2former_r50_vps_1108/epoch_8.pth
+WORK_DIR=work_dirs/mask2former_r50_vps
+CHECKPOINT=work_dirs/mask2former_r50_vps/epoch_8.pth
 PORT=${PORT:-$((29500 + $RANDOM % 29))}
 GPUS_PER_NODE=${GPUS_PER_NODE:-1}
 CPUS_PER_TASK=${CPUS_PER_TASK:-5}

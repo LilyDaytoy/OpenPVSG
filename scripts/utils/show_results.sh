@@ -12,5 +12,6 @@ srun -p ${PARTITION} \
     --gres=gpu:${GPUS_PER_NODE} \
     --ntasks-per-node=${GPUS_PER_NODE} \
     --cpus-per-task=${CPUS_PER_TASK} \
+    --quotatype auto \
     --kill-on-bad-exit=1 \
-    python tools/show_pred_results.py --launcher="slurm" ${PY_ARGS}
+    python tools/show_pred_results.py

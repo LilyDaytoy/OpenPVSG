@@ -14,14 +14,14 @@ from PIL import Image
 
 class PVSGRelationAnnotation:
     def __init__(self, anno_file, split='train'):
-        with open(anno_file, "r") as f:
+        with open(anno_file, 'r') as f:
             anno = json.load(f)
 
         self.video_ids = []
         for data_source in ['vidor', 'epic_kitchen', 'ego4d']:
             for video_id in anno['split'][data_source][split]:
                 self.video_ids.append(video_id)
-        
+
         self.classes = anno['objects']['thing'] + anno['objects']['stuff']
         self.relations = anno['relations']
 
@@ -35,20 +35,27 @@ class PVSGRelationAnnotation:
 
         object_list, relation_list = [], []
         for object_content in video_info['objects']:
-            object_content["category"] = self.classes.index(object_content["category"])
+            object_content['category'] = self.classes.index(
+                object_content['category'])
             object_list.append(object_content)
 
         for relation_content in video_info['relations']:
-            relation_content[2] = self.relations.index(relation_content[2])
-            relation_list.append(relation_content)
+            if relation_content[2] in self.relations:
+                relation_content[2] = self.relations.index(relation_content[2])
+                relation_list.append(relation_content)
 
-        return {'video_id': vid, 'objects': object_list, 
-                'relations': relation_list, 'relation_str': self.videos[vid]['relations']}
+        return {
+            'video_id': vid,
+            'objects': object_list,
+            'relations': relation_list,
+            'relation_str': self.videos[vid]['relations']
+        }
 
 
 def load_pickle(filepath):
-    with open(filepath, "rb") as f:
+    with open(filepath, 'rb') as f:
         return pickle.load(f)
+
 
 def save_pickle(filepath, data):
     with open(filepath, 'wb') as f:
@@ -60,7 +67,7 @@ def get_pred_mask_tubes_one_video(vid, work_dir):
     results = []
 
     # Read mask labels from the file
-    label_path = f"{work_dir}/{vid}/quantitive/masks.txt"
+    label_path = f'{work_dir}/{vid}/quantitive/masks.txt'
     with open(label_path, 'r') as f:
         for line in f:
             labels.append(line.strip().split())
@@ -75,13 +82,14 @@ def get_pred_mask_tubes_one_video(vid, work_dir):
     # Sort data by 'tid' key
     def key_func(k):
         return k['tid']
+
     results = sorted(results, key=key_func)
 
     # Group by tid
     masks_grp_by_tid = {}
     for key, value in groupby(results, key_func):
         masks_grp_by_tid[key] = list(value)
-    
+
     # Organize masks into tubes
     pred_mask_tubes = {}
     for key in masks_grp_by_tid.keys():
@@ -93,9 +101,8 @@ def get_pred_mask_tubes_one_video(vid, work_dir):
         count = Counter(class_ids)
         tube_class, _ = count.most_common(1)[0]
         pred_mask_tubes[int(key)] = {'cid': tube_class, 'mask': mask_list}
-    
-    return pred_mask_tubes
 
+    return pred_mask_tubes
 
 
 def get_gt_mask_tubes_one_video(vid, pvsg_dataset, data_dir='./data'):
@@ -106,9 +113,11 @@ def get_gt_mask_tubes_one_video(vid, pvsg_dataset, data_dir='./data'):
         data_source = 'vidor'
     else:
         data_source = 'ego4d'
-    
+
     gt_masks_root_vid = os.path.join(data_dir, data_source, 'masks', vid)
-    gt_pan_mask_paths = [str(x) for x in sorted(Path(gt_masks_root_vid).rglob("*.png"))]
+    gt_pan_mask_paths = [
+        str(x) for x in sorted(Path(gt_masks_root_vid).rglob('*.png'))
+    ]
     object_list = pvsg_dataset[vid]['objects']
     mask_tubes = dict()
 
@@ -118,11 +127,16 @@ def get_gt_mask_tubes_one_video(vid, pvsg_dataset, data_dir='./data'):
             instance_id = object_entry['object_id']
             if instance_id not in mask_tubes:
                 # Initialize the dictionary for instance_id if it doesn't exist
-                mask_tubes[instance_id] = {'cid': object_entry['category'], 'mask': []}
+                mask_tubes[instance_id] = {
+                    'cid': object_entry['category'],
+                    'mask': []
+                }
             # No need to set 'cid' every time, it should be the same for each instance_id
-            mask_tubes[instance_id]['mask'].append({frame_id: (pan_mask == instance_id).astype(int)})
-    
+            mask_tubes[instance_id]['mask'].append(
+                {frame_id: (pan_mask == instance_id).astype(int)})
+
     return mask_tubes
+
 
 def convert_to_ranges(frames):
     # this function converts list into a range
@@ -138,6 +152,7 @@ def convert_to_ranges(frames):
         new_ranges.append([range_start, sorted_frames[-1]])
 
     return new_ranges
+
 
 def calculate_iou(gt_mask, pred_mask):
     # This is a placeholder function. You should implement the actual IOU calculation here.
@@ -158,21 +173,27 @@ def match_tubes(gt_mask_tubes, pred_mask_tubes):
         gt_cid = gt_tube['cid']
         matching_dict[gt_id] = {}
         # Retrieve all pred tubes with the same cid
-        candidate_pred_tubes = {pred_id: pred_tube for pred_id, pred_tube in pred_mask_tubes.items() 
-                                if int(pred_tube['cid']) == int(gt_cid)}
+        candidate_pred_tubes = {
+            pred_id: pred_tube
+            for pred_id, pred_tube in pred_mask_tubes.items()
+            if int(pred_tube['cid']) == int(gt_cid)
+        }
         gt_frames = set(map(lambda x: list(x.keys())[0], gt_tube['mask']))
 
         # Calculate Tube-IOU for these candidates
         for pred_id, pred_tube in candidate_pred_tubes.items():
             # We need to determine the temporal overlap first
-            pred_frames = set(map(lambda x: list(x.keys())[0], pred_tube['mask']))
+            pred_frames = set(
+                map(lambda x: list(x.keys())[0], pred_tube['mask']))
             overlap_frames = gt_frames.intersection(pred_frames)
 
             # Calculate IOU for overlapping frames and accumulate
             total_iou = 0
             for frame in overlap_frames:
-                gt_mask = next(item for item in gt_tube['mask'] if list(item.keys())[0] == frame)[frame]
-                pred_mask = next(item for item in pred_tube['mask'] if list(item.keys())[0] == frame)[frame]
+                gt_mask = next(item for item in gt_tube['mask']
+                               if list(item.keys())[0] == frame)[frame]
+                pred_mask = next(item for item in pred_tube['mask']
+                                 if list(item.keys())[0] == frame)[frame]
                 total_iou += calculate_iou(gt_mask, pred_mask)
                 if calculate_iou(gt_mask, pred_mask) > 0.5:
                     if pred_id not in matching_dict[gt_id]:
@@ -183,7 +204,10 @@ def match_tubes(gt_mask_tubes, pred_mask_tubes):
     return matching_dict
 
 
-def match_and_process_gt_tubes(vid, pvsg_dataset, pred_mask_tubes, data_dir='./data'):
+def match_and_process_gt_tubes(vid,
+                               pvsg_dataset,
+                               pred_mask_tubes,
+                               data_dir='./data'):
     # Determine the data source
     if vid.startswith('P'):
         data_source = 'epic_kitchen'
@@ -191,13 +215,14 @@ def match_and_process_gt_tubes(vid, pvsg_dataset, pred_mask_tubes, data_dir='./d
         data_source = 'vidor'
     else:
         data_source = 'ego4d'
-        
+
     gt_masks_root_vid = os.path.join(data_dir, data_source, 'masks', vid)
 
     matching_dict = {}
     object_list = pvsg_dataset[vid]['objects']
-    
-    for frame_id, mask_path in enumerate(sorted(Path(gt_masks_root_vid).rglob("*.png"))):
+
+    for frame_id, mask_path in enumerate(
+            sorted(Path(gt_masks_root_vid).rglob('*.png'))):
         pan_mask = np.array(Image.open(mask_path))
 
         for object_entry in object_list:
@@ -208,24 +233,33 @@ def match_and_process_gt_tubes(vid, pvsg_dataset, pred_mask_tubes, data_dir='./d
             gt_mask = (pan_mask == instance_id).astype(bool)
 
             # Prepare candidate prediction masks with the same cid
-            candidate_pred_tubes = {pred_id: pred_tube for pred_id, pred_tube in pred_mask_tubes.items() 
-                                    if int(pred_tube['cid']) == int(cid)}
+            candidate_pred_tubes = {
+                pred_id: pred_tube
+                for pred_id, pred_tube in pred_mask_tubes.items()
+                if int(pred_tube['cid']) == int(cid)
+            }
 
             for pred_id, pred_tube in candidate_pred_tubes.items():
                 # Find overlapping frames
-                pred_frames = set(map(lambda x: list(x.keys())[0], pred_tube['mask']))
+                pred_frames = set(
+                    map(lambda x: list(x.keys())[0], pred_tube['mask']))
                 if frame_id in pred_frames:
-                    pred_mask = next(item for item in pred_tube['mask'] if list(item.keys())[0] == frame_id)[frame_id]
+                    pred_mask = next(
+                        item for item in pred_tube['mask']
+                        if list(item.keys())[0] == frame_id)[frame_id]
                     iou = calculate_iou(gt_mask, pred_mask)
-                    
+
                     if iou > 0.5:
                         if instance_id not in matching_dict:
                             matching_dict[instance_id] = {pred_id: [frame_id]}
                         else:
                             if pred_id not in matching_dict[instance_id]:
-                                matching_dict[instance_id][pred_id] = [frame_id]
+                                matching_dict[instance_id][pred_id] = [
+                                    frame_id
+                                ]
                             else:
-                                matching_dict[instance_id][pred_id].append(frame_id)
+                                matching_dict[instance_id][pred_id].append(
+                                    frame_id)
 
     return matching_dict
 
@@ -234,15 +268,15 @@ def find_ranges(num_list):
     ranges = []
     start = num_list[0]
     for i in range(1, len(num_list)):
-        if num_list[i] > num_list[i-1] + 5:
-            end = num_list[i-1]
+        if num_list[i] > num_list[i - 1] + 5:
+            end = num_list[i - 1]
             ranges.append(f'{start}-{end}')
             start = num_list[i]
     # Add the last range
     ranges.append(f'{start}-{num_list[-1]}')
     return ranges
-    
-    
+
+
 def compact_matching_dict(matching_dict):
     processed_dict = {}
 
@@ -267,6 +301,7 @@ def compact_matching_dict(matching_dict):
 
     return processed_dict
 
+
 def translate_gt_relations(matching_dict, gt_relations):
     translated_relations = []
 
@@ -277,7 +312,7 @@ def translate_gt_relations(matching_dict, gt_relations):
     def is_valid_range(range1):
         # This function checks if the start of the range is less than the end
         return range1[0] < range1[1]
-    
+
     def merge_sublists(lst):
         merged_list = []
         temp_dict = {}
@@ -298,7 +333,7 @@ def translate_gt_relations(matching_dict, gt_relations):
             merged_list.append(list(key) + [values])
 
         return merged_list
-    
+
     for relation in gt_relations:
         tube_1, tube_2, label, time_ranges = relation
         if tube_1 not in matching_dict or tube_2 not in matching_dict:
@@ -313,28 +348,34 @@ def translate_gt_relations(matching_dict, gt_relations):
                 for range_str_1 in ranges_1:
                     start_1, end_1 = map(int, range_str_1.split('-'))
                     for inner_key_2, ranges_2 in tube_2_ranges.items():
-                        if isinstance(ranges_2, str):  # convert string range to list
+                        if isinstance(ranges_2,
+                                      str):  # convert string range to list
                             ranges_2 = [ranges_2]
                         for range_str_2 in ranges_2:
                             start_2, end_2 = map(int, range_str_2.split('-'))
-                            overlap_1 = time_overlap(time_range, [start_1, end_1 + 1])
-                            overlap_2 = time_overlap(time_range, [start_2, end_2 + 1])
+                            overlap_1 = time_overlap(time_range,
+                                                     [start_1, end_1 + 1])
+                            overlap_2 = time_overlap(time_range,
+                                                     [start_2, end_2 + 1])
                             overlap_both = time_overlap(overlap_1, overlap_2)
                             # Check if there is an overlap and the overlap is valid
                             if is_valid_range(overlap_both):
                                 # Append the overlap, inner keys, and label to the translated relations
-                                translated_relations.append([inner_key_1, inner_key_2, label, overlap_both])
-                                
+                                translated_relations.append([
+                                    inner_key_1, inner_key_2, label,
+                                    overlap_both
+                                ])
+
     return merge_sublists(translated_relations)
 
 
 def process_relations(pred_relations, pred_feat_tubes, d=256):
-    """
-    Process predicted relations and features to generate a list of dictionaries containing
-    relation information and features for each subject-object pair across the video frames.
+    """Process predicted relations and features to generate a list of
+    dictionaries containing relation information and features for each subject-
+    object pair across the video frames.
 
     Parameters:
-    - pred_relations: A list of tuples containing relation information 
+    - pred_relations: A list of tuples containing relation information
         (subject index, object index, relation type, time span).
     - pred_feat_tubes: A list of lists containing feature information for each frame and each tube.
     - d: The dimensionality of the feature vectors (default is 256).
@@ -344,32 +385,35 @@ def process_relations(pred_relations, pred_feat_tubes, d=256):
     """
 
     output_list = []
-    
+
     for item in pred_relations:
         tube_s_index, tube_o_index, relation, time_span = item
         video_length = len(pred_feat_tubes[list(pred_feat_tubes.keys())[0]])
-        
-        tube_s_feat, tube_o_feat = np.zeros([video_length, d]), np.zeros([video_length, d])
-        
+
+        tube_s_feat, tube_o_feat = np.zeros([video_length,
+                                             d]), np.zeros([video_length, d])
+
         relation_span = np.zeros(video_length)
         for span_range in time_span:
             for i in range(span_range[0], span_range[1]):
                 relation_span[i] = 1
-        
+
         # processing subject feature
         for frame_id in range(video_length):
             if pred_feat_tubes[tube_s_index][frame_id] is not None:
-                tube_s_feat[frame_id] = pred_feat_tubes[tube_s_index][frame_id]['query_feat']
+                tube_s_feat[frame_id] = pred_feat_tubes[tube_s_index][
+                    frame_id]['query_feat']
             else:
                 relation_span[frame_id] = 0
-                
+
         # processing object feature
         for frame_id in range(video_length):
             if pred_feat_tubes[tube_o_index][frame_id] is not None:
-                tube_o_feat[frame_id] = pred_feat_tubes[tube_o_index][frame_id]['query_feat']
+                tube_o_feat[frame_id] = pred_feat_tubes[tube_o_index][
+                    frame_id]['query_feat']
             else:
                 relation_span[frame_id] = 0
-        
+
         # ignore those without long relation span
         if sum(relation_span) >= 3:
             output_dict = {
@@ -380,8 +424,9 @@ def process_relations(pred_relations, pred_feat_tubes, d=256):
             }
 
             output_list.append(output_dict)
-    
+
     return output_list
+
 
 def process_feats(pred_feat_tubes, d=256):
     video_length = len(pred_feat_tubes[list(pred_feat_tubes.keys())[0]])
@@ -390,10 +435,12 @@ def process_feats(pred_feat_tubes, d=256):
         new_feat_tube = np.zeros([video_length, d])
         for frame_id in range(video_length):
             if pred_feat_tubes[tube_id][frame_id] is not None:
-                new_feat_tube[frame_id] = pred_feat_tubes[tube_id][frame_id]['query_feat']
-                
+                new_feat_tube[frame_id] = pred_feat_tubes[tube_id][frame_id][
+                    'query_feat']
+
         output_list[tube_id] = new_feat_tube
     return output_list
+
 
 def process_pairs(pred_relations):
     pair_list = []
@@ -401,29 +448,30 @@ def process_pairs(pred_relations):
         pair_list.append([relation[0], relation[1]])
     return pair_list
 
+
 def process_feats_and_relations(pred_relations, pred_feat_tubes, d=256):
-    
+
     output_list = []
-        
+
     for item in pred_relations:
         tube_s_index, tube_o_index, relation, time_span = item
         video_length = len(pred_feat_tubes[list(pred_feat_tubes.keys())[0]])
-        
+
         relation_span = np.zeros(video_length)
         for span_range in time_span:
             for i in range(span_range[0], span_range[1]):
                 relation_span[i] = 1
-        
+
         # processing subject feature
         for frame_id in range(video_length):
             if pred_feat_tubes[tube_s_index][frame_id] is None:
                 relation_span[frame_id] = 0
-                
+
         # processing object feature
         for frame_id in range(video_length):
             if pred_feat_tubes[tube_o_index][frame_id] is None:
                 relation_span[frame_id] = 0
-        
+
         # ignore those without long relation span
         if sum(relation_span) >= 3:
             output_dict = {
@@ -434,5 +482,5 @@ def process_feats_and_relations(pred_relations, pred_feat_tubes, d=256):
             }
 
             output_list.append(output_dict)
-    
-    return {"feats": process_feats(pred_feat_tubes), "relations": output_list}
+
+    return {'feats': process_feats(pred_feat_tubes), 'relations': output_list}

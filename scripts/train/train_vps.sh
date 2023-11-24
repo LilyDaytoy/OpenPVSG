@@ -3,7 +3,7 @@ set -x
 PARTITION=priority
 JOB_NAME=psg
 CONFIG=configs/mask2former_vps/mask2former_video_r50.py
-WORK_DIR=work_dirs/mask2former_r50_vps_1108
+WORK_DIR=work_dirs/mask2former_r50_vps
 PORT=${PORT:-$((29500 + $RANDOM % 29))}
 GPUS_PER_NODE=${GPUS_PER_NODE:-4}
 CPUS_PER_TASK=${CPUS_PER_TASK:-5}

@@ -3,8 +3,8 @@ set -x
 PARTITION=regular
 JOB_NAME=psg
 CONFIG=configs/mask2former/mask2former_r50_lsj_8x2_50e_coco-panoptic_custom.py
-WORK_DIR=work_dirs/mask2former_r50_stage1_1104
-CHECKPOINT=work_dirs/mask2former_r50_stage1_1104/epoch_8.pth
+WORK_DIR=work_dirs/mask2former_r50_ips
+CHECKPOINT=work_dirs/mask2former_r50_ips/epoch_8.pth
 PORT=${PORT:-$((29500 + $RANDOM % 29))}
 GPUS_PER_NODE=${GPUS_PER_NODE:-1}
 CPUS_PER_TASK=${CPUS_PER_TASK:-5}

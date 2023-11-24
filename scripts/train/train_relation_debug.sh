@@ -1,11 +1,9 @@
 set -x
 
-PARTITION=super_priority
+PARTITION=priority
 JOB_NAME=psg
-CONFIG=configs/mask2former/mask2former_r50_lsj_8x2_50e_coco-panoptic.py
-WORK_DIR=work_dirs/mask2former_r50_ips
 PORT=${PORT:-$((29500 + $RANDOM % 29))}
-GPUS_PER_NODE=${GPUS_PER_NODE:-4}
+GPUS_PER_NODE=${GPUS_PER_NODE:-1}
 CPUS_PER_TASK=${CPUS_PER_TASK:-5}
 PY_ARGS=${@:5}
 
@@ -16,4 +14,7 @@ srun -p ${PARTITION} \
     --ntasks-per-node=${GPUS_PER_NODE} \
     --cpus-per-task=${CPUS_PER_TASK} \
     --kill-on-bad-exit=1 \
-    python -u tools/train.py ${CONFIG} --work-dir=${WORK_DIR} --launcher="slurm" ${PY_ARGS}
+    -x SG-IDC2-10-51-5-57 \
+    python -m pdb -c continue tools/rel_train.py
+
+# sh scripts/train/train_relation_debug.sh

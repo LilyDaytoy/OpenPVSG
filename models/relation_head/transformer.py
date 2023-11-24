@@ -3,22 +3,27 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class TemporalTransformer(nn.Module):
-    def __init__(self, input_dim=512, num_relations=65, num_transformer_layers=1, dropout_rate=0.1):
+    def __init__(self,
+                 input_dim=512,
+                 num_relations=57,
+                 num_transformer_layers=1,
+                 dropout_rate=0.1):
         super(TemporalTransformer, self).__init__()
         self.num_relations = num_relations
-        self.positional_encoding = PositionalEncoding(input_dim, dropout=dropout_rate)
+        self.positional_encoding = PositionalEncoding(input_dim,
+                                                      dropout=dropout_rate)
 
         # Transformer Encoder Layer
-        encoder_layers = nn.TransformerEncoderLayer(
-            d_model=input_dim,
-            nhead=4,
-            dim_feedforward=512,
-            dropout=dropout_rate
-        )
+        encoder_layers = nn.TransformerEncoderLayer(d_model=input_dim,
+                                                    nhead=4,
+                                                    dim_feedforward=512,
+                                                    dropout=dropout_rate)
 
         # Transformer Encoder
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_layers=num_transformer_layers)
+        self.transformer_encoder = nn.TransformerEncoder(
+            encoder_layers, num_layers=num_transformer_layers)
         self.layer_norm = nn.LayerNorm(input_dim)
 
         self.fc1 = nn.Linear(input_dim, input_dim // 2)
@@ -36,7 +41,7 @@ class TemporalTransformer(nn.Module):
         x = self.positional_encoding(x)
         sequence_output = self.transformer_encoder(x)
         sequence_output = self.layer_norm(sequence_output)
-        
+
         # Revert to original shape [batch_size, seq_length, input_dim]
         sequence_output = sequence_output.transpose(0, 1)
 
@@ -50,14 +55,18 @@ class TemporalTransformer(nn.Module):
 
         return span_pred, relation_pred
 
-class PositionalEncoding(nn.Module):
 
-    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
+class PositionalEncoding(nn.Module):
+    def __init__(self,
+                 d_model: int,
+                 dropout: float = 0.1,
+                 max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
 
         position = torch.arange(max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+        div_term = torch.exp(
+            torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
         pe = torch.zeros(max_len, 1, d_model)
         pe[:, 0, 0::2] = torch.sin(position * div_term)
         pe[:, 0, 1::2] = torch.cos(position * div_term)
