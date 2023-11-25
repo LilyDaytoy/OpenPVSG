@@ -1,6 +1,9 @@
 # Panoptic Video Scene Graph Generation
 <p align="center">
   <!-- <img src="./assets/psgtr_long.gif" align="center" width="80%"> -->
+
+https://github.com/Jingkang50/OpenPVSG/assets/17070708/54a0f4c4-daca-4168-8460-95eb4cf8b85a
+
 <video controls>
   <source src="[https://github.com/Jingkang50/OpenPVSG/assets/17070708/54a0f4c4-daca-4168-8460-95eb4cf8b85a](https://github.com/Jingkang50/OpenPVSG/assets/17070708/54a0f4c4-daca-4168-8460-95eb4cf8b85a)" type="video/mp4">
   Your browser does not support the video tag.
