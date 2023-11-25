@@ -4,9 +4,9 @@ set -x
 PARTITION=priority
 JOB_NAME=tracking
 CONFIG=configs/unitrack/imagenet_resnet50_s3_womotion_timecycle.py
-CHECKPOINT=work_dirs/mask2former_r50_stage1_1104/epoch_8.pth
+CHECKPOINT=work_dirs/mask2former_r50_ips/epoch_8.pth
 SPLIT=val
-WORK_DIR=work_dirs/${SPLIT}_save_qf_1116
+WORK_DIR=work_dirs/${SPLIT}_save
 GPUS_PER_NODE=${GPUS_PER_NODE:-1}
 CPUS_PER_TASK=${CPUS_PER_TASK:-5}
 PY_ARGS=${@:5}

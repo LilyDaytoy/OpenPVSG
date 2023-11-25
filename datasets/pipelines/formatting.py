@@ -23,7 +23,6 @@ class ConcatVideoReferences(object):
         dict of `results`. The second dict of outputs concats the
         dicts in `results[1:]`.
     """
-
     def __call__(self, results):
         assert (isinstance(results, list)), 'results must be list'
         outs = results[:1]
@@ -44,7 +43,11 @@ class ConcatVideoReferences(object):
                     else:
                         outs[1][key].append(result[key])
             for key in [
-                'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels', 'gt_instance_ids',
+                    'proposals',
+                    'gt_bboxes',
+                    'gt_bboxes_ignore',
+                    'gt_labels',
+                    'gt_instance_ids',
             ]:
                 if key not in result:
                     continue
@@ -54,14 +57,17 @@ class ConcatVideoReferences(object):
                 N = value.shape[0]
                 value = np.concatenate((np.full(
                     (N, 1), i - 1, dtype=np.float32), value),
-                    axis=1)
+                                       axis=1)
                 if i == 1:
                     result[key] = value
                 else:
-                    outs[1][key] = np.concatenate((outs[1][key], value), axis=0)
+                    outs[1][key] = np.concatenate((outs[1][key], value),
+                                                  axis=0)
             if 'gt_semantic_seg' in result:
                 if i == 1:
-                    result['gt_semantic_seg'] = result['gt_semantic_seg'][..., None, None]
+                    result['gt_semantic_seg'] = result['gt_semantic_seg'][...,
+                                                                          None,
+                                                                          None]
                 else:
                     outs[1]['gt_semantic_seg'] = np.concatenate(
                         (outs[1]['gt_semantic_seg'],
@@ -73,8 +79,8 @@ class ConcatVideoReferences(object):
                     result['gt_depth'] = result['gt_depth'][..., None, None]
                 else:
                     outs[1]['gt_depth'] = np.concatenate(
-                        (outs[1]['gt_depth'],
-                         result['gt_depth'][..., None, None]),
+                        (outs[1]['gt_depth'], result['gt_depth'][..., None,
+                                                                 None]),
                         axis=-1)
             if i == 1:
                 outs.append(result)
@@ -106,7 +112,6 @@ class SeqDefaultFormatBundle(object):
         ref_prefix (str): The prefix of key added to the second dict of input
             list. Defaults to 'ref'.
     """
-
     def __init__(self, ref_prefix='ref'):
         self.ref_prefix = ref_prefix
 
@@ -157,13 +162,18 @@ class SeqDefaultFormatBundle(object):
         if 'img' in results:
             img = results['img']
             if len(img.shape) == 3:
-                img = np.ascontiguousarray(img.transpose(2, 0, 1))  # from HWC to CHW
+                img = np.ascontiguousarray(img.transpose(2, 0,
+                                                         1))  # from HWC to CHW
             else:
                 img = np.ascontiguousarray(img.transpose(3, 2, 0, 1))
             results['img'] = DC(to_tensor(img), stack=True)
         for key in [
-            'proposals', 'gt_bboxes', 'gt_bboxes_ignore', 'gt_labels',
-            'gt_instance_ids', 'gt_match_indices',
+                'proposals',
+                'gt_bboxes',
+                'gt_bboxes_ignore',
+                'gt_labels',
+                'gt_instance_ids',
+                'gt_match_indices',
         ]:
             if key not in results:
                 continue
@@ -178,8 +188,8 @@ class SeqDefaultFormatBundle(object):
             else:
                 semantic_seg = np.ascontiguousarray(
                     semantic_seg.transpose(3, 2, 0, 1))
-            results['gt_semantic_seg'] = DC(
-                to_tensor(semantic_seg), stack=True)
+            results['gt_semantic_seg'] = DC(to_tensor(semantic_seg),
+                                            stack=True)
         return results
 
     def __repr__(self):
@@ -200,22 +210,22 @@ class VideoCollect(object):
             'scale_factor', 'flip', 'flip_direction', 'img_norm_cfg',
             'frame_id', 'is_video_data').
     """
-
-    def __init__(self,
-                 keys,
-                 meta_keys=None,
-                 reject_empty=False,
-                 num_ref_imgs=0,
-                 # no_obj_class is added for handling non-0  no-obj class
-                 default_meta_keys=('filename', 'ori_filename', 'ori_shape',
-                                    'img_shape', 'pad_shape', 'scale_factor',
-                                    'flip', 'flip_direction', 'img_norm_cfg',
-                                    'seq_id', 'img_id', 'is_video_data', 'no_obj_class')):
+    def __init__(
+        self,
+        keys,
+        meta_keys=None,
+        reject_empty=False,
+        num_ref_imgs=0,
+        # no_obj_class is added for handling non-0  no-obj class
+        default_meta_keys=('filename', 'ori_filename', 'ori_shape',
+                           'img_shape', 'pad_shape', 'scale_factor', 'flip',
+                           'flip_direction', 'img_norm_cfg', 'seq_id',
+                           'img_id', 'is_video_data', 'no_obj_class')):
         self.keys = keys
         self.meta_keys = default_meta_keys
         if meta_keys is not None:
             if isinstance(meta_keys, str):
-                meta_keys = (meta_keys,)
+                meta_keys = (meta_keys, )
             else:
                 assert isinstance(meta_keys, tuple), \
                     'meta_keys must be str or tuple'
@@ -294,18 +304,15 @@ class VideoCollect(object):
         num_channels = 1 if len(img.shape) < 3 else img.shape[2]
         results.setdefault(
             'img_norm_cfg',
-            dict(
-                mean=np.zeros(num_channels, dtype=np.float32),
-                std=np.ones(num_channels, dtype=np.float32),
-                to_rgb=False))
+            dict(mean=np.zeros(num_channels, dtype=np.float32),
+                 std=np.ones(num_channels, dtype=np.float32),
+                 to_rgb=False))
         return results
 
 
 @PIPELINES.register_module()
 class LabelConsistencyChecker:
-    """This module is to make the annotations are consistent in each video.
-    """
-
+    """This module is to make the annotations are consistent in each video."""
     def __init__(self, num_frames=5):
         self.num_frames = num_frames
 
@@ -315,7 +322,7 @@ class LabelConsistencyChecker:
         if ins_mul_nframe % self.num_frames != 0:
             return None
         num_ins = ins_mul_nframe // self.num_frames
-        ins_id_bucket = torch.zeros((num_ins,), dtype=torch.float)
+        ins_id_bucket = torch.zeros((num_ins, ), dtype=torch.float)
         for i in range(ins_mul_nframe):
             frame_cur = i // num_ins
             ins_cur = i % num_ins

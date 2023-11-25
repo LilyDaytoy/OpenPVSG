@@ -15,41 +15,44 @@ from mmdet.datasets.pipelines import Compose
 
 from datasets.datasets.utils import SeqObj, vpq_eval, PVSGAnnotation
 
+
 @DATASETS.register_module()
 class PVSGVideoDataset:
     def __init__(self,
                  pipeline=None,
-                 data_root="./data/", 
-                 annotation_file="pvsg.json",
+                 data_root='./data/',
+                 annotation_file='pvsg.json',
                  test_mode=False,
                  split='train',
-                 ref_sample_mode: Literal['random', 'sequence', 'test'] = 'sequence',
+                 ref_sample_mode: Literal['random', 'sequence',
+                                          'test'] = 'sequence',
                  ref_seq_index: List[int] = None,
                  ref_seq_len_test: int = 4,
-                 with_relation: bool = False
-                 ):
+                 with_relation: bool = False):
         assert data_root is not None
         data_root = Path(data_root)
         anno_file = data_root / annotation_file
 
-        with open(anno_file, "r") as f:
+        with open(anno_file, 'r') as f:
             anno = json.load(f)
-        
+
         # collect class names
-        self.THING_CLASSES = anno['objects']['thing']   # 115
-        self.STUFF_CLASSES = anno['objects']['stuff']   # 11
+        self.THING_CLASSES = anno['objects']['thing']  # 115
+        self.STUFF_CLASSES = anno['objects']['stuff']  # 11
         self.BACKGROUND_CLASSES = ['background']
         self.CLASSES = self.THING_CLASSES + self.STUFF_CLASSES
         self.num_thing_classes = len(self.THING_CLASSES)
         self.num_stuff_classes = len(self.STUFF_CLASSES)
-        self.num_classes = len(self.CLASSES)    # 126
+        self.num_classes = len(self.CLASSES)  # 126
 
         # collect video id within the split
         video_ids, img_names = [], []
         for data_source in ['vidor', 'epic_kitchen', 'ego4d']:
             for video_id in anno['split'][data_source][split]:
                 video_ids.append(video_id)
-                img_names += glob.glob(os.path.join(data_root, data_source, 'frames', video_id, '*.png'))
+                img_names += glob.glob(
+                    os.path.join(data_root, data_source, 'frames', video_id,
+                                 '*.png'))
 
         assert anno_file.exists()
         assert data_root.exists()
@@ -62,8 +65,8 @@ class PVSGVideoDataset:
         vid2seq_id = {}
         seq_count = 0
         for itm in img_names:
-            tokens = itm.split(sep="/")
-            vid, img_id = tokens[-2], tokens[-1].split(sep=".")[0]
+            tokens = itm.split(sep='/')
+            vid, img_id = tokens[-2], tokens[-1].split(sep='.')[0]
             vid_anno = anno[vid]  # annotation_dict of this video
 
             # map vid to seq_id (seq_id starts from 0)
@@ -74,21 +77,23 @@ class PVSGVideoDataset:
                 vid2seq_id[vid] = seq_count
                 seq_count += 1
 
-            images.append(SeqObj({
-                'seq_id': seq_id,
-                'img_id': int(img_id),
-                'img': itm,
-                'ann': itm.replace('frames', 'masks'),
-                'objects': vid_anno['objects'],
-                'pre_hook': self.cates2id,
-            }))
+            images.append(
+                SeqObj({
+                    'seq_id': seq_id,
+                    'img_id': int(img_id),
+                    'img': itm,
+                    'ann': itm.replace('frames', 'masks'),
+                    'objects': vid_anno['objects'],
+                    'pre_hook': self.cates2id,
+                }))
 
             assert os.path.exists(images[-1]['img'])
             assert os.path.exists(images[-1]['ann'])
         self.vid2seq_id = vid2seq_id
 
-        reference_images = {hash(image): image for image in images} # image -- all SeqObj
-        
+        reference_images = {hash(image): image
+                            for image in images}  # image -- all SeqObj
+
         # ref_seq_index is None means no ref img
         self.ref_sample_mode = ref_sample_mode
         if ref_seq_index is None:
@@ -103,11 +108,14 @@ class PVSGVideoDataset:
                 if self.ref_seq_index:
                     for index in random.choices(self.ref_seq_index, k=1):
                         query_obj = SeqObj({
-                            'seq_id': img_cur.dict['seq_id'],
-                            'img_id': img_cur.dict['img_id'] + index
+                            'seq_id':
+                            img_cur.dict['seq_id'],
+                            'img_id':
+                            img_cur.dict['img_id'] + index
                         })
                         if hash(query_obj) in reference_images:
-                            seq_now.append(reference_images[hash(query_obj)].dict)
+                            seq_now.append(
+                                reference_images[hash(query_obj)].dict)
                         else:
                             is_seq = False
                             break
@@ -119,14 +127,18 @@ class PVSGVideoDataset:
             for img_cur in images:
                 is_seq = True
                 seq_now = []
-                if self.ref_seq_index: # [0,1]
+                if self.ref_seq_index:  # [0,1]
                     for index in reversed(self.ref_seq_index):
                         query_obj = SeqObj({
-                            'seq_id': img_cur.dict['seq_id'],
-                            'img_id': img_cur.dict['img_id'] + index 
+                            'seq_id':
+                            img_cur.dict['seq_id'],
+                            'img_id':
+                            img_cur.dict['img_id'] + index
                         })
                         if hash(query_obj) in reference_images:
-                            seq_now.append(copy.deepcopy(reference_images[hash(query_obj)].dict))
+                            seq_now.append(
+                                copy.deepcopy(
+                                    reference_images[hash(query_obj)].dict))
                         else:
                             is_seq = False
                             break
@@ -138,7 +150,10 @@ class PVSGVideoDataset:
             if ref_seq_len_test == 0:
                 sequences = [[copy.deepcopy(itm.dict)] for itm in images]
             elif ref_seq_len_test == 1:
-                sequences = [[copy.deepcopy(itm.dict), copy.deepcopy(itm.dict)] for itm in images]
+                sequences = [[
+                    copy.deepcopy(itm.dict),
+                    copy.deepcopy(itm.dict)
+                ] for itm in images]
             else:
                 seq_id_pre = -1
                 seq_now = []
@@ -150,14 +165,20 @@ class PVSGVideoDataset:
                             while len(seq_now) < ref_seq_len_test + 1:
                                 seq_now.append(copy.deepcopy(seq_now[-1]))
                             sequences.append(seq_now)
-                        seq_now = [copy.deepcopy(img_cur.dict), copy.deepcopy(img_cur.dict)]
+                        seq_now = [
+                            copy.deepcopy(img_cur.dict),
+                            copy.deepcopy(img_cur.dict)
+                        ]
                     elif len(seq_now) % (ref_seq_len_test + 1) == 0:
                         sequences.append(seq_now)
-                        seq_now = [copy.deepcopy(img_cur.dict), copy.deepcopy(img_cur.dict)]
+                        seq_now = [
+                            copy.deepcopy(img_cur.dict),
+                            copy.deepcopy(img_cur.dict)
+                        ]
                     else:
                         seq_now.append(copy.deepcopy(img_cur.dict))
         else:
-            raise ValueError("{} not supported.".format(self.ref_sample_mode))
+            raise ValueError('{} not supported.'.format(self.ref_sample_mode))
 
         self.sequences = sequences
         self.images = reference_images
@@ -170,9 +191,11 @@ class PVSGVideoDataset:
         self.flag = self._set_groups()
 
     def cates2id(self, category):
-        class2ids = dict(zip(self.CLASSES + self.BACKGROUND_CLASSES, 
-                         range(len(self.CLASSES + self.BACKGROUND_CLASSES))))
+        class2ids = dict(
+            zip(self.CLASSES + self.BACKGROUND_CLASSES,
+                range(len(self.CLASSES + self.BACKGROUND_CLASSES))))
         return class2ids[category]
+
     def pre_pipelines(self, results):
         for _results in results:
             _results['img_info'] = []
@@ -180,7 +203,6 @@ class PVSGVideoDataset:
             _results['thing_upper'] = self.num_thing_classes
             _results['ori_filename'] = os.path.basename(_results['img'])
             _results['filename'] = _results['img']
-
 
     def prepare_train_img(self, idx):
         """Get training data and annotations after pipeline.
@@ -192,7 +214,7 @@ class PVSGVideoDataset:
             dict: Training data and annotation after pipeline with new keys \
                 introduced by pipeline.
         """
-        results = copy.deepcopy(self.sequences[idx]) # eg. [0,0,1]
+        results = copy.deepcopy(self.sequences[idx])  # eg. [0,0,1]
         self.pre_pipelines(results)
         return self.pipeline(results)
 
@@ -208,7 +230,7 @@ class PVSGVideoDataset:
         """Get another random index from the same group as the given index."""
         pool = np.where(self.flag == self.flag[idx])[0]
         return np.random.choice(pool)
-    
+
     # Copy and Modify from mmdet
     def __getitem__(self, idx):
         if self.test_mode:
@@ -227,9 +249,5 @@ class PVSGVideoDataset:
     def _set_groups(self):
         return np.zeros((len(self)), dtype=np.int64)
 
-    def evaluate(
-            self,
-            results,
-            **kwargs
-    ):
+    def evaluate(self, results, **kwargs):
         pass

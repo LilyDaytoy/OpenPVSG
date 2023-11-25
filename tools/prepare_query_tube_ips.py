@@ -18,8 +18,7 @@ from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
                          wrap_fp16_model)
 
 from mmdet.apis import multi_gpu_test, single_gpu_test
-from mmdet.datasets import (build_dataloader,
-                            replace_ImageToTensor)
+from mmdet.datasets import (build_dataloader, replace_ImageToTensor)
 from mmdet.models import build_detector
 from mmdet.utils import (build_ddp, build_dp, compat_cfg, get_device,
                          replace_cfg_vals, setup_multi_processes,
@@ -52,12 +51,11 @@ def parse_args():
         nargs='+',
         help='(Deprecated, please use --gpu-id) ids of gpus to use '
         '(only applicable to non-distributed training)')
-    parser.add_argument(
-        '--gpu-id',
-        type=int,
-        default=0,
-        help='id of gpu to use '
-        '(only applicable to non-distributed testing)')
+    parser.add_argument('--gpu-id',
+                        type=int,
+                        default=0,
+                        help='id of gpu to use '
+                        '(only applicable to non-distributed testing)')
     parser.add_argument(
         '--format-only',
         action='store_true',
@@ -71,17 +69,15 @@ def parse_args():
         help='evaluation metrics, which depends on the dataset, e.g., "bbox",'
         ' "segm", "proposal" for COCO, and "mAP", "recall" for PASCAL VOC')
     parser.add_argument('--show', action='store_true', help='show results')
-    parser.add_argument(
-        '--show-dir', help='directory where painted images will be saved')
-    parser.add_argument(
-        '--show-score-thr',
-        type=float,
-        default=0.3,
-        help='score threshold (default: 0.3)')
-    parser.add_argument(
-        '--gpu-collect',
-        action='store_true',
-        help='whether to use gpu to collect results.')
+    parser.add_argument('--show-dir',
+                        help='directory where painted images will be saved')
+    parser.add_argument('--show-score-thr',
+                        type=float,
+                        default=0.3,
+                        help='score threshold (default: 0.3)')
+    parser.add_argument('--gpu-collect',
+                        action='store_true',
+                        help='whether to use gpu to collect results.')
     parser.add_argument(
         '--tmpdir',
         help='tmp directory used for collecting results from multiple '
@@ -109,11 +105,10 @@ def parse_args():
         action=DictAction,
         help='custom options for evaluation, the key-value pair in xxx=yyy '
         'format will be kwargs for dataset.evaluate() function')
-    parser.add_argument(
-        '--launcher',
-        choices=['none', 'pytorch', 'slurm', 'mpi'],
-        default='none',
-        help='job launcher')
+    parser.add_argument('--launcher',
+                        choices=['none', 'pytorch', 'slurm', 'mpi'],
+                        default='none',
+                        help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
@@ -190,8 +185,10 @@ def main():
         distributed = True
         init_dist(args.launcher, **cfg.dist_params)
 
-    test_dataloader_default_args = dict(
-        samples_per_gpu=1, workers_per_gpu=2, dist=distributed, shuffle=False)
+    test_dataloader_default_args = dict(samples_per_gpu=1,
+                                        workers_per_gpu=2,
+                                        dist=distributed,
+                                        shuffle=False)
 
     # in case the test dataset is concatenated
     if isinstance(cfg.data.test, dict):
@@ -224,30 +221,29 @@ def main():
     if not distributed:
         model = build_dp(model, cfg.device, device_ids=cfg.gpu_ids)
     else:
-        model = build_ddp(
-            model,
-            cfg.device,
-            device_ids=[int(os.environ['LOCAL_RANK'])],
-            broadcast_buffers=False)
-    
+        model = build_ddp(model,
+                          cfg.device,
+                          device_ids=[int(os.environ['LOCAL_RANK'])],
+                          broadcast_buffers=False)
+
     split = args.split
-    pvsg_json = "./data/pvsg.json"
+    pvsg_json = './data/pvsg.json'
     save_dir = args.work_dir
-    with open(pvsg_json, "r") as f:
+    with open(pvsg_json, 'r') as f:
         anno = json.load(f)
     video_names = []
     for data_source in ['vidor', 'epic_kitchen', 'ego4d']:
         for video_id in anno['split'][data_source][split]:
             video_names.append(video_id)
     for video_name in video_names:
-        print("Testing for video {}".format(video_name), flush=True)
+        print('Testing for video {}'.format(video_name), flush=True)
         cfg.data.test.video_name = video_name
         dataset_single_video = build_dataset(cfg.data.test)
         data_loader = build_dataloader(dataset_single_video, **test_loader_cfg)
         model.CLASSES = dataset_single_video.CLASSES
         if not distributed:
-            outputs = single_gpu_test(model, data_loader, args.show, args.show_dir,
-                                    args.show_score_thr)
+            outputs = single_gpu_test(model, data_loader, args.show,
+                                      args.show_dir, args.show_score_thr)
         else:
             outputs = multi_gpu_test(
                 model, data_loader, args.tmpdir, args.gpu_collect
@@ -262,6 +258,7 @@ def main():
                  outputs=outputs,
                  classes=dataset_single_video.CLASSES,
                  save_root=save_root)
+
 
 if __name__ == '__main__':
     main()

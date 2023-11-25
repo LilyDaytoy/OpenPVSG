@@ -7,8 +7,9 @@ from mmdet.core import INSTANCE_OFFSET
 
 
 class SeqObj:
-    """
-    This is a seq object class for querying the image for constructing sequence.
+    """This is a seq object class for querying the image for constructing
+    sequence.
+
     DIVISOR : This divisor is orthogonal with panoptic class-instance divisor (should be large enough).
     """
     DIVISOR = 1000000
@@ -20,7 +21,8 @@ class SeqObj:
         return self.dict['seq_id'] * self.DIVISOR + self.dict['img_id']
 
     def __eq__(self, other):
-        return self.dict['seq_id'] == other.dict['seq_id'] and self.dict['img_id'] == other.dict['img_id']
+        return self.dict['seq_id'] == other.dict['seq_id'] and self.dict[
+            'img_id'] == other.dict['img_id']
 
     def __getitem__(self, attr):
         return self.dict[attr]
@@ -46,8 +48,8 @@ def vpq_eval(element, num_classes=61, max_ins=10000, ign_id=61):
 
     void_id = ign_id * max_ins
     ign_ids = {
-        gt_id for gt_id in six.iterkeys(gt_areas)
-        if (gt_id // max_ins) == ign_id
+        gt_id
+        for gt_id in six.iterkeys(gt_areas) if (gt_id // max_ins) == ign_id
     }
 
     int_ids = gt_ids.astype(np.int64) * offset + pred_ids.astype(np.int64)
@@ -74,10 +76,8 @@ def vpq_eval(element, num_classes=61, max_ins=10000, ign_id=61):
         pred_cat = int(pred_id // max_ins)
         if gt_cat != pred_cat:
             continue
-        union = (
-                gt_areas[gt_id] + pred_areas[pred_id] - int_area -
-                prediction_void_overlap(pred_id)
-        )
+        union = (gt_areas[gt_id] + pred_areas[pred_id] - int_area -
+                 prediction_void_overlap(pred_id))
         iou = int_area / union
         if iou > 0.5:
             tp_per_class[gt_cat] += 1
@@ -105,7 +105,7 @@ def vpq_eval(element, num_classes=61, max_ins=10000, ign_id=61):
 
 
 def pan_mm2hb(pred_pan_map, num_classes, divisor=10000):
-    pan_seg_map = - np.ones_like(pred_pan_map)
+    pan_seg_map = -np.ones_like(pred_pan_map)
     for itm in np.unique(pred_pan_map):
         if itm >= INSTANCE_OFFSET:
             cls = itm % INSTANCE_OFFSET
@@ -121,15 +121,15 @@ def pan_mm2hb(pred_pan_map, num_classes, divisor=10000):
 
 class PVSGAnnotation:
     def __init__(self, anno_file, video_ids):
-        with open(anno_file, "r") as f:
+        with open(anno_file, 'r') as f:
             anno = json.load(f)
         self.anno = anno['data']
-        
+
         videos = {}
         for video_anno in self.anno:
             if video_anno['video_id'] in video_ids:
                 videos[video_anno['video_id']] = video_anno
-        
+
         self.videos = videos
 
     def __getitem__(self, vid):

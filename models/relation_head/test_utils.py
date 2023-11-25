@@ -1,5 +1,6 @@
 import torch
 
+
 def pick_top_pairs_eval(pred_matrix, num_total_pairs=100):
     with torch.no_grad():
         # Mask the diagonal elements
@@ -9,11 +10,13 @@ def pick_top_pairs_eval(pred_matrix, num_total_pairs=100):
 
         pred_matrix_flat = pred_matrix.view(-1)
         max_pairs = min(pred_matrix_flat.size(0), num_total_pairs)
-        
+
         # Get top 100 predicted pairs
         _, top_indices = torch.topk(pred_matrix_flat, max_pairs, sorted=True)
         num_objects = pred_matrix.size(0)
-        top_pairs = [(index // num_objects, index % num_objects) for index in top_indices if index // num_objects != index % num_objects]
+        top_pairs = [(index // num_objects, index % num_objects)
+                     for index in top_indices
+                     if index // num_objects != index % num_objects]
 
         # Remove duplicates and truncate to ensure exactly num_total_pairs
         return [[int(s.item()), int(o.item())] for s, o in top_pairs]
@@ -79,5 +82,3 @@ def generate_pairwise_results(span_pred, prob, selected_pairs):
         results.append(result)
 
     return results
-
-

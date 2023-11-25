@@ -2,7 +2,7 @@
 <p align="center">
   <!-- <img src="./assets/psgtr_long.gif" align="center" width="80%"> -->
 <video controls>
-  <source src="[https://github.com/Jingkang50/FunQA/assets/17070708/2a03eb8b-dd2a-4eaf-b2a4-fcd36c56b54a](https://github.com/Jingkang50/FunQA/assets/17070708/2a03eb8b-dd2a-4eaf-b2a4-fcd36c56b54a)" type="video/mp4">
+  <source src="[https://github.com/Jingkang50/OpenPVSG/assets/17070708/54a0f4c4-daca-4168-8460-95eb4cf8b85a](https://github.com/Jingkang50/OpenPVSG/assets/17070708/54a0f4c4-daca-4168-8460-95eb4cf8b85a)" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -11,11 +11,11 @@
     <img src="https://img.shields.io/badge/Paper-CVPR%202023-b31b1b?style=flat-square">
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://psgdataset.org/" target='_blank'>
-    <img src="https://img.shields.io/badge/Page-jingkang50/pvsg-228c22?style=flat-square">
+  <a href="https://jingkang50.github.io/PVSG/" target='_blank'>
+    <img src="https://img.shields.io/badge/Page-jingkang50/PVSG-228c22?style=flat-square">
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/EgQzvsYo3t9BpxgMZ6VHaEMBDAb7v0UgI8iIAExQUJq62Q?e=fIY3zh" target='_blank'>
+  <a href="https://entuedu-my.sharepoint.com/:f:/r/personal/jingkang001_e_ntu_edu_sg/Documents/PVSG_dataset?csf=1&web=1&e=lTqRxQ" target='_blank'>
     <img src="https://img.shields.io/badge/Data-PVSGDataset-334b7f?style=flat-square">
   </a>
 </p>

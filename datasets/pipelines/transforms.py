@@ -7,19 +7,20 @@ from mmdet.datasets.pipelines import Resize, RandomFlip, Pad, Normalize
 @PIPELINES.register_module()
 class SeqResize(Resize):
     """Resize images.
-    Please refer to `mmdet.datasets.pipelines.transfroms.py:Resize` for
+
+    Please refer to `mmdet.datasets.pipelines.transforms.py:Resize` for
     detailed docstring.
     Args:
         share_params (bool): If True, share the resize parameters for all
             images. Defaults to True.
     """
-
     def __init__(self, share_params=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.share_params = share_params
 
     def __call__(self, results):
         """Call function.
+
         For each dict in results, call the call function of `Resize` to resize
         image and corresponding annotations.
         Args:
@@ -41,23 +42,23 @@ class SeqResize(Resize):
         return outs
 
 
-
 @PIPELINES.register_module()
 class SeqRandomFlip(RandomFlip):
     """Randomly flip for images.
-    Please refer to `mmdet.datasets.pipelines.transfroms.py:RandomFlip` for
+
+    Please refer to `mmdet.datasets.pipelines.transforms.py:RandomFlip` for
     detailed docstring.
     Args:
         share_params (bool): If True, share the flip parameters for all images.
             Defaults to True.
     """
-
     def __init__(self, share_params=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.share_params = share_params
 
     def __call__(self, results):
         """Call function.
+
         For each dict in results, call `RandomFlip` to randomly flip image.
         Args:
             results (list[dict]): List of dict that from
@@ -123,14 +124,14 @@ class SeqRandomCrop(object):
         - If the crop does not contain any gt-bbox region and
           `allow_negative_crop` is set to False, skip this image.
     """
-
-    def __init__(self,
-                 crop_size,
-                 allow_negative_crop=False,
-                 share_params=False,
-                 bbox_clip_border=True,
-                 check_id_match=True,
-                 ):
+    def __init__(
+        self,
+        crop_size,
+        allow_negative_crop=False,
+        share_params=False,
+        bbox_clip_border=True,
+        check_id_match=True,
+    ):
         assert crop_size is None or (crop_size[0] > 0 and crop_size[1] > 0)
         self.crop_size = crop_size
         self.allow_negative_crop = allow_negative_crop
@@ -158,6 +159,7 @@ class SeqRandomCrop(object):
     def random_crop(self, results, offsets=None):
         """Call function to randomly crop images, bounding boxes, masks,
         semantic segmentation maps.
+
         Args:
             results (dict): Result dict from loading pipeline.
             offsets (tuple, optional): Pre-defined offsets for cropping.
@@ -192,8 +194,8 @@ class SeqRandomCrop(object):
             if self.bbox_clip_border:
                 bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, img_shape[1])
                 bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, img_shape[0])
-            valid_inds = (bboxes[:, 2] > bboxes[:, 0]) & (
-                    bboxes[:, 3] > bboxes[:, 1])
+            valid_inds = (bboxes[:, 2] > bboxes[:, 0]) & (bboxes[:, 3] >
+                                                          bboxes[:, 1])
             # If the crop does not contain any gt-bbox area and
             # self.allow_negative_crop is False, skip this image.
             if (key == 'gt_bboxes' and not valid_inds.any()
@@ -211,7 +213,7 @@ class SeqRandomCrop(object):
             if mask_key in results:
                 results[mask_key] = results[mask_key][
                     valid_inds.nonzero()[0]].crop(
-                    np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
+                        np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
 
         # crop semantic seg
         for key in results.get('seg_fields', []):
@@ -226,6 +228,7 @@ class SeqRandomCrop(object):
     def __call__(self, results):
         """Call function to sequentially randomly crop images, bounding boxes,
         masks, semantic segmentation maps.
+
         Args:
             results (dict): Result dict from loading pipeline.
         Returns:
@@ -267,15 +270,16 @@ class SeqRandomCrop(object):
 @PIPELINES.register_module()
 class SeqPad(Pad):
     """Pad images.
+
     Please refer to `mmdet.datasets.pipelines.transfroms.py:Pad` for detailed
     docstring.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __call__(self, results):
         """Call function.
+
         For each dict in results, call the call function of `Pad` to pad image.
         Args:
             results (list[dict]): List of dict that from
@@ -292,19 +296,19 @@ class SeqPad(Pad):
         return outs
 
 
-
 @PIPELINES.register_module()
 class SeqNormalize(Normalize):
     """Normalize images.
+
     Please refer to `mmdet.datasets.pipelines.transfroms.py:Normalize` for
     detailed docstring.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __call__(self, results):
         """Call function.
+
         For each dict in results, call the call function of `Normalize` to
         normalize image.
         Args:

@@ -4,9 +4,9 @@ set -x
 PARTITION=priority
 JOB_NAME=vps_feat
 CONFIG=configs/mask2former_vps/mask2former_video_r50_single_video_test.py
-CHECKPOINT=work_dirs/mask2former_r50_vps_1108/epoch_8.pth
+CHECKPOINT=work_dirs/mask2former_r50_vps/epoch_8.pth
 SPLIT=train
-WORK_DIR=work_dirs/vps_${SPLIT}_save_qf_1115
+WORK_DIR=work_dirs/vps_${SPLIT}_save_qf
 GPUS_PER_NODE=${GPUS_PER_NODE:-1}
 CPUS_PER_TASK=${CPUS_PER_TASK:-5}
 PY_ARGS=${@:5}
