@@ -15,11 +15,18 @@
     <img src="https://img.shields.io/badge/Page-jingkang50/PVSG-228c22?style=flat-square">
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://entuedu-my.sharepoint.com/:f:/r/personal/jingkang001_e_ntu_edu_sg/Documents/PVSG_dataset?csf=1&web=1&e=lTqRxQ" target='_blank'>
+  <a href="https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/EpHpnXP-ta9Nu1wD6FwkDWAB0LxY8oE9VNqsgv6ln-i8QQ?e=fURefF" target='_blank'>
     <img src="https://img.shields.io/badge/Data-PVSGDataset-334b7f?style=flat-square">
   </a>
-</p>
-
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/EgvpTfCTMudLpxw-h0_BVdcBAHacUaAQD-u9OvkUlpaDBg?e=LXnqaX" target='_blank'>
+    <img src="https://img.shields.io/badge/Data-QuickView-7de5f6?style=flat-square">
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/LilyDaytoy/OpenPVSG" target='_blank'>
+    <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FLilyDaytoy%2FPVSG&count_bg=%23FFA500&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=visitors&edge_flat=true">
+  </p>
+  </a>
   <p align="center">
   <font size=5><strong>Panoptic Video Scene Graph Generation</strong></font>
     <br>
@@ -39,7 +46,6 @@
   </p>
 </p>
 
-
 ---
 ## What is PVSG Task?
 <strong>The Panoptic Video Scene Graph Generation (PVSG) Task</strong> aims to interpret a complex scene video with a dynamic scene graph representation, with each node in the scene graph grounded by its pixel-accurate segmentation mask tube in the video.
@@ -52,7 +58,7 @@
 ## The PVSG Dataset
 We carefully collect 400 videos, each featuring dynamic scenes and rich in logical reasoning content. On average, these videos are 76.5 seconds long (5 FPS). The collection comprises 289 videos from VidOR, 55 videos from EpicKitchen, and 56 videos from Ego4D.
 
-Please access the dataset via this [link](), and put the downloaded zip files to the place below.
+Please access the dataset via this [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/EpHpnXP-ta9Nu1wD6FwkDWAB0LxY8oE9VNqsgv6ln-i8QQ?e=fURefF), and put the downloaded zip files to the place below.
 ```
 ├── assets
 ├── checkpoints
@@ -78,7 +84,7 @@ Please access the dataset via this [link](), and put the downloaded zip files to
 ├── environment.yml
 └── README.md
 ```
-Please run `unzip_and_extract.py` to unzip the files and extract frames from the videos, then you will have your `data` directory looks like this:
+Please run `unzip_and_extract.py` to unzip the files and extract frames from the videos. If you use `zip`, make sure to use `unzip -j xxx.zip` to remove junk paths. You should have your `data` directory looks like this:
 ```
 data
 ├── ego4d
@@ -106,15 +112,16 @@ Our developers use `CUDA 10.1` to do experiments.
 You can specify the appropriate `cudatoolkit` version to install on your machine in the `environment.yml` file, and then run the following to create the `conda` environment:
 ```bash
 conda env create -f environment.yml
+conda activate openpvsg
 ```
 You shall manually install the following dependencies.
 ```bash
 # Install mmcv
 pip install mmcv-full==1.4.0 -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.7.0/index.html
-pip install openmim
 conda install -c conda-forge pycocotools
-mim install mmdet==2.25.0
+pip install mmdet==2.25.0
 
+# already within environment.yml
 pip install timm
 python -m pip install scipy
 pip install git+https://github.com/cocodataset/panopticapi.git
@@ -129,19 +136,12 @@ pip install seaborn
 pip install ftfy
 pip install regex
 
-
 # If you're using wandb for logging
 pip install wandb
 wandb login
-
-# If you develop and run openpsg directly, install it from source:
-pip install -v -e .
-# "-v" means verbose, or more output
-# "-e" means installing a project in editable mode,
-# thus any local modifications made to the code will take effect without reinstallation.
 ```
 
-Download the [pretrained models]() for tracking if you are interested in IPS+Tracking solution.
+Download the [pretrained models](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) for tracking if you are interested in IPS+Tracking solution.
 
 
 ## Training and Testing
@@ -175,8 +175,8 @@ sh scripts/test/test_relation_full.sh
 ## Model Zoo
 Method    | M2F ckpt | vanilla | filter |  conv |  transformer |
 ---       | ---  | ---  | ---  | ---  | ---  |
-mask2former_ips | [link]() | [link]() | [link]() | [link]() | [link]() |
-mask2former_vps | [link]() | [link]() | [link]() | [link]() | [link]() |
+mask2former_ips | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) |
+mask2former_vps | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) | [link](https://entuedu-my.sharepoint.com/:f:/g/personal/jingkang001_e_ntu_edu_sg/ErwH2H27bJpAg9xpaTa49fkB3IJkiLJ6AEFuxUHYKMI1dQ?e=9XINcP) |
 
 ## Citation
 If you find our repository useful for your research, please consider citing our paper:

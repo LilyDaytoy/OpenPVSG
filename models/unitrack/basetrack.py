@@ -1,5 +1,5 @@
 import numpy as np
-from collections import OrderedDict,deque
+from collections import OrderedDict, deque
 from models.unitrack.core.motion.kalman_filter import KalmanFilter
 import models.unitrack.core.association.matching as matching
 from models.unitrack.utils.box import *
@@ -41,6 +41,10 @@ class BaseTrack(object):
         BaseTrack._count += 1
         return BaseTrack._count
 
+    @staticmethod
+    def reset_count():
+        BaseTrack._count = 0
+
     def activate(self, *args):
         raise NotImplementedError
 
@@ -60,19 +64,27 @@ class BaseTrack(object):
 class STrack(BaseTrack):
     shared_kalman = KalmanFilter()
 
-    def __init__(self, tlwh, score, temp_feat, buffer_size=30, 
-            mask=None, pose=None, ac=False, category=-1, use_kalman=True):
+    def __init__(self,
+                 tlwh,
+                 score,
+                 temp_feat,
+                 buffer_size=30,
+                 mask=None,
+                 pose=None,
+                 ac=False,
+                 category=-1,
+                 use_kalman=True):
 
         # wait activate
         self._tlwh = np.asarray(tlwh, dtype=np.float)
         self.kalman_filter = None
         self.mean, self.covariance = None, None
         self.use_kalman = use_kalman
-        if not use_kalman: ac=True
-        self.is_activated = ac 
+        if not use_kalman: ac = True
+        self.is_activated = ac
 
         self.score = score
-        self.category = category 
+        self.category = category
         self.tracklet_len = 0
 
         self.smooth_feat = None
@@ -81,42 +93,44 @@ class STrack(BaseTrack):
         self.alpha = 0.9
         self.mask = mask
         self.pose = pose
-    
+
     def update_features(self, feat):
-        self.curr_feat = feat 
+        self.curr_feat = feat
         if self.smooth_feat is None:
             self.smooth_feat = feat
         elif self.smooth_feat.shape == feat.shape:
-            self.smooth_feat = self.alpha *self.smooth_feat + (1-self.alpha) * feat
+            self.smooth_feat = self.alpha * self.smooth_feat + (
+                1 - self.alpha) * feat
         else:
             pass
-
 
     def predict(self):
         mean_state = self.mean.copy()
         if self.state != TrackState.Tracked:
             mean_state[7] = 0
-        self.mean, self.covariance = self.kalman_filter.predict(mean_state, self.covariance)
+        self.mean, self.covariance = self.kalman_filter.predict(
+            mean_state, self.covariance)
 
     @staticmethod
     def multi_predict(stracks):
         if len(stracks) > 0:
             multi_mean = np.asarray([st.mean.copy() for st in stracks])
             multi_covariance = np.asarray([st.covariance for st in stracks])
-            for i,st in enumerate(stracks):
+            for i, st in enumerate(stracks):
                 if st.state != TrackState.Tracked:
                     multi_mean[i][7] = 0
-            multi_mean, multi_covariance = STrack.shared_kalman.multi_predict(multi_mean, multi_covariance)
+            multi_mean, multi_covariance = STrack.shared_kalman.multi_predict(
+                multi_mean, multi_covariance)
             for i, (mean, cov) in enumerate(zip(multi_mean, multi_covariance)):
                 stracks[i].mean = mean
                 stracks[i].covariance = cov
 
-
     def activate(self, kalman_filter, frame_id):
-        """Start a new tracklet"""
+        """Start a new tracklet."""
         self.kalman_filter = kalman_filter
         self.track_id = self.next_id()
-        self.mean, self.covariance = self.kalman_filter.initiate(tlwh_to_xyah(self._tlwh))
+        self.mean, self.covariance = self.kalman_filter.initiate(
+            tlwh_to_xyah(self._tlwh))
 
         self.tracklet_len = 0
         self.state = TrackState.Tracked
@@ -126,11 +140,14 @@ class STrack(BaseTrack):
         self.frame_id = frame_id
         self.start_frame = frame_id
 
-    def re_activate(self, new_track, frame_id, new_id=False, update_feature=True):
+    def re_activate(self,
+                    new_track,
+                    frame_id,
+                    new_id=False,
+                    update_feature=True):
         if self.use_kalman:
             self.mean, self.covariance = self.kalman_filter.update(
-                self.mean, self.covariance, tlwh_to_xyah(new_track.tlwh)
-            )
+                self.mean, self.covariance, tlwh_to_xyah(new_track.tlwh))
         else:
             self.mean, self.covariance = None, None
             self._tlwh = np.asarray(new_track.tlwh, dtype=np.float)
@@ -146,8 +163,8 @@ class STrack(BaseTrack):
             self.mask = new_track.mask
 
     def update(self, new_track, frame_id, update_feature=True):
-        """
-        Update a matched track
+        """Update a matched track.
+
         :type new_track: STrack
         :type frame_id: int
         :type update_feature: bool
@@ -168,7 +185,7 @@ class STrack(BaseTrack):
 
         self.score = new_track.score
         '''
-        For TAO dataset 
+        For TAO dataset
         '''
         self.category = new_track.category
         if update_feature:
@@ -180,9 +197,8 @@ class STrack(BaseTrack):
 
     @property
     def tlwh(self):
-        """Get current position in bounding box format `(top left x, top left y,
-                width, height)`.
-        """
+        """Get current position in bounding box format `(top left x, top left
+        y, width, height)`."""
         if self.mean is None:
             return self._tlwh.copy()
         ret = self.mean[:4].copy()
@@ -193,19 +209,17 @@ class STrack(BaseTrack):
     @property
     def tlbr(self):
         """Convert bounding box to format `(min x, min y, max x, max y)`, i.e.,
-        `(top left, bottom right)`.
-        """
+        `(top left, bottom right)`."""
         ret = self.tlwh.copy()
         ret[2:] += ret[:2]
         return ret
 
-
     def to_xyah(self):
         return tlwh_to_xyah(self.tlwh)
-    
 
     def __repr__(self):
-        return 'OT_{}_({}-{})'.format(self.track_id, self.start_frame, self.end_frame)
+        return 'OT_{}_({}-{})'.format(self.track_id, self.start_frame,
+                                      self.end_frame)
 
 
 def joint_stracks(tlista, tlistb):
@@ -235,17 +249,15 @@ def sub_stracks(tlista, tlistb):
 
 def remove_duplicate_stracks(stracksa, stracksb, ioudist=0.15):
     pdist = matching.iou_distance(stracksa, stracksb)
-    pairs = np.where(pdist<ioudist)
+    pairs = np.where(pdist < ioudist)
     dupa, dupb = list(), list()
-    for p,q in zip(*pairs):
+    for p, q in zip(*pairs):
         timep = stracksa[p].frame_id - stracksa[p].start_frame
         timeq = stracksb[q].frame_id - stracksb[q].start_frame
         if timep > timeq:
             dupb.append(q)
         else:
             dupa.append(p)
-    resa = [t for i,t in enumerate(stracksa) if not i in dupa]
-    resb = [t for i,t in enumerate(stracksb) if not i in dupb]
+    resa = [t for i, t in enumerate(stracksa) if not i in dupa]
+    resb = [t for i, t in enumerate(stracksb) if not i in dupb]
     return resa, resb
-            
-

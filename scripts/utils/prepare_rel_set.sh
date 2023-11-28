@@ -5,7 +5,7 @@ set -x
 PARTITION=priority
 JOB_NAME=psg
 CPUS_PER_TASK=${CPUS_PER_TASK:-5}
-SPLIT=train
+SPLIT=val
 WORK_DIR=work_dirs/ips_${SPLIT}_save_qf
 
 PYTHONPATH="/mnt/lustre/jkyang/CVPR23/openpvsg":$PYTHONPATH \
