@@ -10,7 +10,7 @@ https://github.com/Jingkang50/OpenPVSG/assets/17070708/54a0f4c4-daca-4168-8460-9
 </video>
 
   <p align="center">
-  <a href="https://arxiv.org/" target='_blank'>
+  <a href="https://arxiv.org/abs/2311.17058" target='_blank'>
     <img src="https://img.shields.io/badge/Paper-CVPR%202023-b31b1b?style=flat-square">
   </a>
   &nbsp;&nbsp;&nbsp;
